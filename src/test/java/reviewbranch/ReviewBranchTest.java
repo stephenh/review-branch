@@ -1,5 +1,6 @@
 package reviewbranch;
 
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -48,6 +49,24 @@ public class ReviewBranchTest {
     verify(git).getCurrentCommitMessage();
     verify(git).checkout("commitA");
     verify(rb).updateRbForCurrentCommit("1");
+  }
+
+  @Test
+  public void createNewRbForTwoCommits() {
+    // given we want to review two new commits
+    when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
+    when(git.getCurrentCommitMessage()).thenReturn("commit message A...", "commit message B...");
+    when(rb.createNewRbForCurrentCommit()).thenReturn("1", "2");
+    // when ran
+    b.run();
+    // then we post a new RB for the current commit
+    verify(git).getRevisionsFromOriginMaster();
+    verify(git, atLeast(2)).getCurrentCommitMessage();
+    verify(git).checkout("commitA");
+    verify(git).checkout("commitB");
+    verify(rb, atLeast(2)).createNewRbForCurrentCommit();
+    verify(git).amendCurrentCommitMessage("RB=1");
+    verify(git).amendCurrentCommitMessage("RB=2");
   }
 
 }
