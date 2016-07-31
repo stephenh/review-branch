@@ -10,6 +10,10 @@ public interface Git {
 
   void checkout(String revision);
 
+  void resetHard(String revision);
+
+  void cherryPick(String revision);
+
   String getCurrentCommitMessage();
 
   void amendCurrentCommitMessage(String newMessage);

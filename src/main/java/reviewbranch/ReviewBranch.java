@@ -27,14 +27,20 @@ public class ReviewBranch {
   }
 
   public void run() {
-    String currentBranch = git.getCurrentBranch();
-
     List<String> revs = git.getRevisionsFromOriginMaster();
     log.info("Found revs {}", revs);
 
+    boolean firstCommit = true;
+
     for (String rev : revs) {
       log.info("Checking out {}", rev);
-      git.checkout(rev);
+
+      if (firstCommit) {
+        git.resetHard(rev);
+        firstCommit = false;
+      } else {
+        git.cherryPick(rev);
+      }
 
       String commitMessage = git.getCurrentCommitMessage();
       Optional<String> rbId = parseRbIdIfAvailable(commitMessage);
@@ -46,8 +52,6 @@ public class ReviewBranch {
         git.amendCurrentCommitMessage(commitMessage + "\n\nRB=" + newRbId);
       }
     }
-
-    git.checkout(currentBranch);
   }
 
   private static final Optional<String> parseRbIdIfAvailable(String commitMessage) {
