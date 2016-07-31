@@ -24,12 +24,14 @@ public class ReviewBranchTest {
   public void createNewRbForOneCommit() {
     // given we want to review one new commit
     when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA").toList());
+    when(rb.createNewRbForCurrentCommit()).thenReturn("1");
     // when ran
     b.run();
     // then we post a new RB for the current commit
     verify(git).getRevisionsFromOriginMaster();
     verify(git).checkout("commitA");
     verify(rb).createNewRbForCurrentCommit();
+    verify(git).amendCurrentCommitMessage("RB=1");
   }
 
 }

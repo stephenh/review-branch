@@ -2,7 +2,7 @@ package reviewbranch;
 
 public interface ReviewBoard {
 
-  void createNewRbForCurrentCommit();
+  String createNewRbForCurrentCommit();
 
   void updateRbForCurrentCommit(String rbId);
 

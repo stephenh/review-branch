@@ -28,7 +28,9 @@ public class ReviewBranch {
     for (String rev : revs) {
       log.info("Checking out {}", rev);
       git.checkout(rev);
-      rb.createNewRbForCurrentCommit();
+
+      String rbId = rb.createNewRbForCurrentCommit();
+      git.amendCurrentCommitMessage("RB=" + rbId);
     }
   }
 }
