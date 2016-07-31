@@ -2,12 +2,14 @@ package reviewbranch;
 
 import java.util.Optional;
 
-import reviewbranch.ReviewBranch.ReviewBranchArgs;
+import reviewbranch.ReviewBranch.ReviewArgs;
 
 public interface ReviewBoard {
 
-  String createNewRbForCurrentCommit(ReviewBranchArgs args, String currentBranch, Optional<String> dependsOn);
+  String createNewRbForCurrentCommit(ReviewArgs args, String currentBranch, Optional<String> dependsOn);
 
-  void updateRbForCurrentCommit(ReviewBranchArgs args, String rbId, Optional<String> dependsOn);
+  void updateRbForCurrentCommit(ReviewArgs args, String rbId, Optional<String> dependsOn);
+
+  void dcommit(String rbId);
 
 }

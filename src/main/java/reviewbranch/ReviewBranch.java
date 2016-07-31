@@ -8,17 +8,18 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.rvesse.airline.SingleCommand;
+import com.github.rvesse.airline.Cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+import com.github.rvesse.airline.builder.CliBuilder;
 
 /**
  * Creates RBs for a branch, one RB per commit.
  */
 public class ReviewBranch {
 
-  @Command(name = "review-branch")
-  public static class ReviewBranchArgs {
+  @Command(name = "review")
+  public static class ReviewArgs {
     @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")
     public String reviewers;
 
@@ -32,38 +33,53 @@ public class ReviewBranch {
     public String testingDone;
   }
 
+  @Command(name = "dcommit")
+  public static class DCommitArgs {
+  }
+
   public static void main(String[] stringArgs) {
-    SingleCommand<ReviewBranchArgs> parser = SingleCommand.singleCommand(ReviewBranchArgs.class);
-    ReviewBranchArgs args = parser.parse(stringArgs);
-    new ReviewBranch(new GitImpl(), new ReviewBoardImpl(), args).run();
+    // SingleCommand<ReviewArgs> parser = SingleCommand.singleCommand(ReviewArgs.class);
+    // ReviewArgs args = parser.parse(stringArgs);
+    // new ReviewBranch(new GitImpl(), new ReviewBoardImpl(), args).run();
+
+    CliBuilder<Object> b = Cli.<Object> builder("review-branch").withDescription("creates lots of RBs");
+    b.withCommand(ReviewArgs.class);
+    b.withCommand(DCommitArgs.class);
+    Object args = b.build().parse(stringArgs);
+    new ReviewBranch(new GitImpl(), new ReviewBoardImpl()).run(args);
   }
 
   private static final Pattern rbIdRegex = Pattern.compile("\\nRB=(\\d+)");
   private static final Logger log = LoggerFactory.getLogger(ReviewBranch.class);
   private final Git git;
   private final ReviewBoard rb;
-  private final ReviewBranchArgs args;
 
-  public ReviewBranch(Git git, ReviewBoard rb, ReviewBranchArgs args) {
+  public ReviewBranch(Git git, ReviewBoard rb) {
     this.git = git;
     this.rb = rb;
-    this.args = args;
   }
 
-  public void run() {
+  public void run(Object args) {
+    if (args instanceof ReviewArgs) {
+      run((ReviewArgs) args);
+    } else {
+      run((DCommitArgs) args);
+    }
+  }
+
+  public void run(ReviewArgs args) {
     String currentBranch = git.getCurrentBranch();
 
     List<String> revs = git.getRevisionsFromOriginMaster();
     log.info("Found revs {}", revs);
 
     Optional<String> previousRbId = Optional.empty();
-
     for (String rev : revs) {
-      log.info("Checking out {}", rev);
-
       if (!previousRbId.isPresent()) {
+        log.info("Resetting to {}", rev);
         git.resetHard(rev);
       } else {
+        log.info("Cherry picking {}", rev);
         git.cherryPick(rev);
       }
 
@@ -79,6 +95,32 @@ public class ReviewBranch {
         git.amendCurrentCommitMessage(commitMessage + "\n\nRB=" + newRbId);
         previousRbId = Optional.of(newRbId);
       }
+    }
+  }
+
+  public void run(DCommitArgs args) {
+    List<String> revs = git.getRevisionsFromOriginMaster();
+    log.info("Found revs {}", revs);
+
+    Optional<String> previousRbId = Optional.empty();
+    for (String rev : revs) {
+      if (!previousRbId.isPresent()) {
+        log.info("Resetting to {}", rev);
+        git.resetHard(rev);
+      } else {
+        log.info("Cherry picking {}", rev);
+        git.cherryPick(rev);
+      }
+
+      String commitMessage = git.getCurrentCommitMessage();
+      Optional<String> rbId = parseRbIdIfAvailable(commitMessage);
+      if (!rbId.isPresent()) {
+        throw new IllegalStateException("Cannot dcommit without an RB in the commit message");
+      }
+
+      rb.dcommit(rbId.get());
+      log.info("Updated RB: " + rbId.get());
+      previousRbId = rbId;
     }
   }
 

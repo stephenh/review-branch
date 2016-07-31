@@ -12,14 +12,15 @@ import org.jooq.lambda.Seq;
 import org.junit.After;
 import org.junit.Test;
 
-import reviewbranch.ReviewBranch.ReviewBranchArgs;
+import reviewbranch.ReviewBranch.DCommitArgs;
+import reviewbranch.ReviewBranch.ReviewArgs;
 
 public class ReviewBranchTest {
 
   private final Git git = mock(Git.class);
   private final ReviewBoard rb = mock(ReviewBoard.class);
-  private final ReviewBranchArgs args = new ReviewBranchArgs();
-  private final ReviewBranch b = new ReviewBranch(git, rb, args);
+  private final ReviewArgs args = new ReviewArgs();
+  private final ReviewBranch b = new ReviewBranch(git, rb);
 
   @After
   public void after() {
@@ -34,7 +35,7 @@ public class ReviewBranchTest {
     when(git.getCurrentCommitMessage()).thenReturn("commit message...");
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     // when ran
-    b.run();
+    b.run(args);
     // then we post a new RB for the current commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -51,7 +52,7 @@ public class ReviewBranchTest {
     when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA").toList());
     when(git.getCurrentCommitMessage()).thenReturn("commit message...\nRB=1");
     // when ran
-    b.run();
+    b.run(args);
     // then we post an update to RB for the current commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -69,7 +70,7 @@ public class ReviewBranchTest {
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
     // when ran
-    b.run();
+    b.run(args);
     // then we post a new RB for the current commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -80,6 +81,22 @@ public class ReviewBranchTest {
     verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
     verify(git).amendCurrentCommitMessage("commit message A...\n\nRB=1");
     verify(git).amendCurrentCommitMessage("commit message B...\n\nRB=2");
+  }
+
+  @Test
+  public void dcommitTwoCommits() {
+    // given we want to dcommit two new commits
+    when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
+    when(git.getCurrentCommitMessage()).thenReturn("commit message A...\nRB=1", "commit message B...\nRB=2");
+    // when ran
+    b.run(new DCommitArgs());
+    // then we dcommit each commit
+    verify(git).getRevisionsFromOriginMaster();
+    verify(git, atLeast(2)).getCurrentCommitMessage();
+    verify(git).resetHard("commitA");
+    verify(git).cherryPick("commitB");
+    verify(rb).dcommit("1");
+    verify(rb).dcommit("2");
   }
 
 }
