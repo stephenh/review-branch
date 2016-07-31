@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 public class ReviewBranch {
 
   public static void main(String[] args) {
+    ReviewBranch r = new ReviewBranch(new GitImpl(), new ReviewBoardImpl());
+    r.run();
   }
 
   private static final Pattern rbIdRegex = Pattern.compile("\\nRB=(\\d+)");
@@ -27,6 +29,8 @@ public class ReviewBranch {
   }
 
   public void run() {
+    String currentBranch = git.getCurrentBranch();
+
     List<String> revs = git.getRevisionsFromOriginMaster();
     log.info("Found revs {}", revs);
 
@@ -47,8 +51,10 @@ public class ReviewBranch {
 
       if (rbId.isPresent()) {
         rb.updateRbForCurrentCommit(rbId.get());
+        log.info("Updated RB: " + rbId.get());
       } else {
-        String newRbId = rb.createNewRbForCurrentCommit();
+        String newRbId = rb.createNewRbForCurrentCommit(currentBranch);
+        log.info("Created RB: " + newRbId);
         git.amendCurrentCommitMessage(commitMessage + "\n\nRB=" + newRbId);
       }
     }
