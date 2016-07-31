@@ -1,6 +1,9 @@
 package reviewbranch;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +16,7 @@ public class ReviewBranch {
   public static void main(String[] args) {
   }
 
+  private static final Pattern rbIdRegex = Pattern.compile("\\nRB=(\\d+)");
   private static final Logger log = LoggerFactory.getLogger(ReviewBranch.class);
   private final Git git;
   private final ReviewBoard rb;
@@ -29,8 +33,24 @@ public class ReviewBranch {
       log.info("Checking out {}", rev);
       git.checkout(rev);
 
-      String rbId = rb.createNewRbForCurrentCommit();
-      git.amendCurrentCommitMessage("RB=" + rbId);
+      String commitMessage = git.getCurrentCommitMessage();
+      Optional<String> rbId = parseRbIdIfAvailable(commitMessage);
+
+      if (rbId.isPresent()) {
+        rb.updateRbForCurrentCommit(rbId.get());
+      } else {
+        String newRbId = rb.createNewRbForCurrentCommit();
+        git.amendCurrentCommitMessage("RB=" + newRbId);
+      }
+    }
+  }
+
+  private static final Optional<String> parseRbIdIfAvailable(String commitMessage) {
+    Matcher m = rbIdRegex.matcher(commitMessage);
+    if (m.find()) {
+      return Optional.of(m.group(1));
+    } else {
+      return Optional.empty();
     }
   }
 }
