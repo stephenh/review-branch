@@ -10,6 +10,6 @@ public interface Git {
 
   String getCurrentCommitMessage();
 
-  void amendCurrentCommitMessage(String newline);
+  void amendCurrentCommitMessage(String newMessage);
 
 }

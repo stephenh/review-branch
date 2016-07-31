@@ -34,7 +34,7 @@ public class ReviewBranchTest {
     verify(git).getCurrentCommitMessage();
     verify(git).checkout("commitA");
     verify(rb).createNewRbForCurrentCommit();
-    verify(git).amendCurrentCommitMessage("RB=1");
+    verify(git).amendCurrentCommitMessage("commit message...\n\nRB=1");
   }
 
   @Test
@@ -65,8 +65,8 @@ public class ReviewBranchTest {
     verify(git).checkout("commitA");
     verify(git).checkout("commitB");
     verify(rb, atLeast(2)).createNewRbForCurrentCommit();
-    verify(git).amendCurrentCommitMessage("RB=1");
-    verify(git).amendCurrentCommitMessage("RB=2");
+    verify(git).amendCurrentCommitMessage("commit message A...\n\nRB=1");
+    verify(git).amendCurrentCommitMessage("commit message B...\n\nRB=2");
   }
 
 }

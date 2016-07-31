@@ -40,7 +40,7 @@ public class ReviewBranch {
         rb.updateRbForCurrentCommit(rbId.get());
       } else {
         String newRbId = rb.createNewRbForCurrentCommit();
-        git.amendCurrentCommitMessage("RB=" + newRbId);
+        git.amendCurrentCommitMessage(commitMessage + "\n\nRB=" + newRbId);
       }
     }
   }
