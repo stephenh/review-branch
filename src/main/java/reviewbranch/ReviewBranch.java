@@ -56,28 +56,28 @@ public class ReviewBranch {
     List<String> revs = git.getRevisionsFromOriginMaster();
     log.info("Found revs {}", revs);
 
-    boolean firstCommit = true;
+    Optional<String> previousRbId = Optional.empty();
 
     for (String rev : revs) {
       log.info("Checking out {}", rev);
 
-      if (firstCommit) {
+      if (!previousRbId.isPresent()) {
         git.resetHard(rev);
-        firstCommit = false;
       } else {
         git.cherryPick(rev);
       }
 
       String commitMessage = git.getCurrentCommitMessage();
       Optional<String> rbId = parseRbIdIfAvailable(commitMessage);
-
       if (rbId.isPresent()) {
-        rb.updateRbForCurrentCommit(args, rbId.get());
+        rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
         log.info("Updated RB: " + rbId.get());
+        previousRbId = rbId;
       } else {
-        String newRbId = rb.createNewRbForCurrentCommit(args, currentBranch);
+        String newRbId = rb.createNewRbForCurrentCommit(args, currentBranch, previousRbId);
         log.info("Created RB: " + newRbId);
         git.amendCurrentCommitMessage(commitMessage + "\n\nRB=" + newRbId);
+        previousRbId = Optional.of(newRbId);
       }
     }
   }

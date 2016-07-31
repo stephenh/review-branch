@@ -2,6 +2,8 @@ package reviewbranch;
 
 import static org.apache.commons.lang3.StringUtils.chomp;
 
+import java.util.Optional;
+
 import joist.util.Execute;
 import joist.util.Execute.BufferedResult;
 import reviewbranch.ReviewBranch.ReviewBranchArgs;
@@ -12,7 +14,10 @@ import reviewbranch.ReviewBranch.ReviewBranchArgs;
 public class ReviewBoardImpl implements ReviewBoard {
 
   @Override
-  public String createNewRbForCurrentCommit(ReviewBranchArgs args, String currentBranch) {
+  public String createNewRbForCurrentCommit(//
+    ReviewBranchArgs args,
+    String currentBranch,
+    Optional<String> previousRbId) {
     // `git review` stores a single RB-per-branch ID in config; ensure we don't use that
     unsetReviewIdInGitConfig(currentBranch);
 
@@ -34,6 +39,9 @@ public class ReviewBoardImpl implements ReviewBoard {
     if (args.publish) {
       e.arg("--publish");
     }
+    if (previousRbId.isPresent()) {
+      e.arg("--rbt-flags").arg(" --depends-on=" + previousRbId.get());
+    }
 
     BufferedResult r = e.toBuffer();
     failIfInvalidResult(r);
@@ -43,7 +51,7 @@ public class ReviewBoardImpl implements ReviewBoard {
   }
 
   @Override
-  public void updateRbForCurrentCommit(ReviewBranchArgs args, String rbId) {
+  public void updateRbForCurrentCommit(ReviewBranchArgs args, String rbId, Optional<String> previousRbId) {
     Execute e = git() //
       .arg("review")
       .arg("update")
@@ -56,6 +64,9 @@ public class ReviewBoardImpl implements ReviewBoard {
     }
     if (args.publish) {
       e.arg("--publish");
+    }
+    if (previousRbId.isPresent()) {
+      e.arg("--rbt-flags").arg(" --depends-on=" + previousRbId.get());
     }
 
     BufferedResult r = e.toBuffer();

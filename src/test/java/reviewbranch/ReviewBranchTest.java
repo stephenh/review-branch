@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.jooq.lambda.Seq;
 import org.junit.After;
 import org.junit.Test;
@@ -30,7 +32,7 @@ public class ReviewBranchTest {
     when(git.getCurrentBranch()).thenReturn("branch1");
     when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA").toList());
     when(git.getCurrentCommitMessage()).thenReturn("commit message...");
-    when(rb.createNewRbForCurrentCommit(args, "branch1")).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     // when ran
     b.run();
     // then we post a new RB for the current commit
@@ -38,7 +40,7 @@ public class ReviewBranchTest {
     verify(git).getRevisionsFromOriginMaster();
     verify(git).getCurrentCommitMessage();
     verify(git).resetHard("commitA");
-    verify(rb).createNewRbForCurrentCommit(args, "branch1");
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.empty());
     verify(git).amendCurrentCommitMessage("commit message...\n\nRB=1");
   }
 
@@ -55,7 +57,7 @@ public class ReviewBranchTest {
     verify(git).getRevisionsFromOriginMaster();
     verify(git).getCurrentCommitMessage();
     verify(git).resetHard("commitA");
-    verify(rb).updateRbForCurrentCommit(args, "1");
+    verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
   }
 
   @Test
@@ -64,7 +66,8 @@ public class ReviewBranchTest {
     when(git.getCurrentBranch()).thenReturn("branch1");
     when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
     when(git.getCurrentCommitMessage()).thenReturn("commit message A...", "commit message B...");
-    when(rb.createNewRbForCurrentCommit(args, "branch1")).thenReturn("1", "2");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
     // when ran
     b.run();
     // then we post a new RB for the current commit
@@ -73,7 +76,8 @@ public class ReviewBranchTest {
     verify(git, atLeast(2)).getCurrentCommitMessage();
     verify(git).resetHard("commitA");
     verify(git).cherryPick("commitB");
-    verify(rb, atLeast(2)).createNewRbForCurrentCommit(args, "branch1");
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.empty());
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
     verify(git).amendCurrentCommitMessage("commit message A...\n\nRB=1");
     verify(git).amendCurrentCommitMessage("commit message B...\n\nRB=2");
   }
