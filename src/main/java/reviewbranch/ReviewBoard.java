@@ -1,9 +1,11 @@
 package reviewbranch;
 
+import reviewbranch.ReviewBranch.ReviewBranchArgs;
+
 public interface ReviewBoard {
 
-  String createNewRbForCurrentCommit(String currentBranch);
+  String createNewRbForCurrentCommit(ReviewBranchArgs args, String currentBranch);
 
-  void updateRbForCurrentCommit(String rbId);
+  void updateRbForCurrentCommit(ReviewBranchArgs args, String rbId);
 
 }
