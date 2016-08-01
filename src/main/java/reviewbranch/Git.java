@@ -1,10 +1,17 @@
 package reviewbranch;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface Git {
 
   String getCurrentBranch();
+
+  String getCurrentTreeHash();
+
+  String getCurrentCommitMessage();
+
+  void amendCurrentCommitMessage(String newMessage);
 
   List<String> getRevisionsFromOriginMaster();
 
@@ -14,8 +21,12 @@ public interface Git {
 
   void cherryPick(String revision);
 
-  String getCurrentCommitMessage();
+  List<String> getMultipleValueConfig(String key);
 
-  void amendCurrentCommitMessage(String newMessage);
+  void addMultipleValueConfig(String key, String value);
+
+  Optional<String> getNote(String ref);
+
+  void setNote(String ref, String value);
 
 }

@@ -2,7 +2,9 @@ package reviewbranch;
 
 import static org.apache.commons.lang3.StringUtils.chomp;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.lambda.Seq;
@@ -64,8 +66,47 @@ public class GitImpl implements Git {
   }
 
   @Override
+  public String getCurrentTreeHash() {
+    BufferedResult r = git().arg("log").arg("-1").arg("--pretty=%T").toBuffer();
+    failIfInvalidResult(r);
+    return chomp(r.out);
+  }
+
+  @Override
   public void amendCurrentCommitMessage(String newMessage) {
     BufferedResult r = git().arg("commit").arg("--amend").arg("-o").arg("-m").arg(newMessage).toBuffer();
+    failIfInvalidResult(r);
+  }
+
+  @Override
+  public List<String> getMultipleValueConfig(String key) {
+    BufferedResult r = git().arg("config").arg("--get-all").arg(key).toBuffer();
+    if (r.exitValue == 1) {
+      return new ArrayList<>();
+    }
+    failIfInvalidResult(r);
+    return Seq.of(chomp(r.out).split("\n")).toList();
+  }
+
+  @Override
+  public void addMultipleValueConfig(String key, String value) {
+    BufferedResult r = git().arg("config").arg("--add").arg(key).arg(value).toBuffer();
+    failIfInvalidResult(r);
+  }
+
+  @Override
+  public Optional<String> getNote(String ref) {
+    BufferedResult r = git().arg("notes").arg("--ref=" + ref).arg("show").toBuffer();
+    if (r.exitValue == 1) {
+      return Optional.empty();
+    }
+    failIfInvalidResult(r);
+    return Optional.of(chomp(r.out));
+  }
+
+  @Override
+  public void setNote(String ref, String value) {
+    BufferedResult r = git().arg("notes").arg("--ref=" + ref).arg("add").arg("-f").arg("-m").arg(value).toBuffer();
     failIfInvalidResult(r);
   }
 

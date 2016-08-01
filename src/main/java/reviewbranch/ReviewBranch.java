@@ -2,8 +2,6 @@ package reviewbranch;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +47,6 @@ public class ReviewBranch {
     new ReviewBranch(new GitImpl(), new ReviewBoardImpl()).run(args);
   }
 
-  private static final Pattern rbIdRegex = Pattern.compile("\\nRB=(\\d+)");
   private static final Logger log = LoggerFactory.getLogger(ReviewBranch.class);
   private final Git git;
   private final ReviewBoard rb;
@@ -60,10 +57,25 @@ public class ReviewBranch {
   }
 
   public void run(Object args) {
+    ensureGitNotesConfigured();
     if (args instanceof ReviewArgs) {
       run((ReviewArgs) args);
     } else {
       run((DCommitArgs) args);
+    }
+  }
+
+  public void ensureGitNotesConfigured() {
+    addConfigIfNeeded("notes.displayRef", "ref/notes/reviewid");
+    addConfigIfNeeded("notes.displayRef", "ref/notes/reviewlasthash");
+    addConfigIfNeeded("notes.rewriteRef", "ref/notes/reviewid");
+    addConfigIfNeeded("notes.rewriteRef", "ref/notes/reviewlasthash");
+  }
+  
+  private void addConfigIfNeeded(String key, String value) {
+    List<String> current = git.getMultipleValueConfig(key);
+    if (!current.contains(value)) {
+      git.addMultipleValueConfig(key, value);
     }
   }
 
@@ -83,16 +95,24 @@ public class ReviewBranch {
         git.cherryPick(rev);
       }
 
-      String commitMessage = git.getCurrentCommitMessage();
-      Optional<String> rbId = parseRbIdIfAvailable(commitMessage);
+      Optional<String> rbId = git.getNote("reviewid");
+      Optional<String> lastTreeHash = git.getNote("reviewlasthash");
+      String currentTreeHash = git.getCurrentTreeHash();
+
       if (rbId.isPresent()) {
-        rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
-        log.info("Updated RB: " + rbId.get());
+        if (lastTreeHash.isPresent() && lastTreeHash.get().equals(currentTreeHash)) {
+          log.info("Skipped RB: " + rbId.get());
+        } else {
+          rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
+          log.info("Updated RB: " + rbId.get());
+          git.setNote("reviewlasthash", currentTreeHash);
+        }
         previousRbId = rbId;
       } else {
         String newRbId = rb.createNewRbForCurrentCommit(args, currentBranch, previousRbId);
         log.info("Created RB: " + newRbId);
-        git.amendCurrentCommitMessage(commitMessage + "\n\nRB=" + newRbId);
+        git.setNote("reviewid", newRbId);
+        git.setNote("reviewlasthash", currentTreeHash);
         previousRbId = Optional.of(newRbId);
       }
     }
@@ -112,24 +132,14 @@ public class ReviewBranch {
         git.cherryPick(rev);
       }
 
-      String commitMessage = git.getCurrentCommitMessage();
-      Optional<String> rbId = parseRbIdIfAvailable(commitMessage);
+      Optional<String> rbId = git.getNote("reviewid");
       if (!rbId.isPresent()) {
-        throw new IllegalStateException("Cannot dcommit without an RB in the commit message");
+        throw new IllegalStateException("Cannot dcommit without a previous review");
       }
 
       rb.dcommit(rbId.get());
       log.info("Updated RB: " + rbId.get());
       previousRbId = rbId;
-    }
-  }
-
-  private static final Optional<String> parseRbIdIfAvailable(String commitMessage) {
-    Matcher m = rbIdRegex.matcher(commitMessage);
-    if (m.find()) {
-      return Optional.of(m.group(1));
-    } else {
-      return Optional.empty();
     }
   }
 }
