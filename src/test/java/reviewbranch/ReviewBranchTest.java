@@ -89,7 +89,7 @@ public class ReviewBranchTest {
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
     verify(git).resetHard("commitA");
-    verify(git).cherryPick("commitB");
+    verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
     verify(git, atLeast(2)).getCurrentTreeHash();
@@ -120,7 +120,7 @@ public class ReviewBranchTest {
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
     verify(git).resetHard("commitA");
-    verify(git).cherryPick("commitB");
+    verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
     verify(git, atLeast(2)).getCurrentTreeHash();
@@ -147,7 +147,7 @@ public class ReviewBranchTest {
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
     verify(git).resetHard("commitA");
-    verify(git).cherryPick("commitB");
+    verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
     verify(git, atLeast(2)).getCurrentTreeHash();
@@ -158,6 +158,37 @@ public class ReviewBranchTest {
     verify(git).setNote("reviewid", "2");
     verify(git).setNote("reviewlasthash", "tree2");
   }
+
+  @Test
+  public void updateFirstRbIfItsRebased() {
+    // given we want to review two commits
+    when(git.getCurrentBranch()).thenReturn("branch1");
+    when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
+    // and the first one it's notes rebased together with another commit
+    when(git.getNote("reviewid")).thenReturn(Optional.of("1\n\n3"), Optional.empty());
+    when(git.getNote("reviewlasthash")).thenReturn(Optional.of("tree1\n\ntree3"), Optional.empty());
+    when(git.getCurrentTreeHash()).thenReturn("tree1b", "tree2");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
+    // when ran
+    b.run(args);
+    // then we post a new RB for the 2nd commit
+    verify(git).getCurrentBranch();
+    verify(git).getRevisionsFromOriginMaster();
+    verify(git).resetHard("commitA");
+    verify(git).resetHard("commitB");
+    verify(git, atLeast(2)).getNote("reviewid");
+    verify(git, atLeast(2)).getNote("reviewlasthash");
+    verify(git, atLeast(2)).getCurrentTreeHash();
+    verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
+    // and update both commits' notes
+    verify(git).setNote("reviewid", "1");
+    verify(git).setNote("reviewlasthash", "tree1b");
+    verify(git).setNote("reviewid", "2");
+    verify(git).setNote("reviewlasthash", "tree2");
+  }
+
 
   @Test
   public void dcommitTwoCommits() {

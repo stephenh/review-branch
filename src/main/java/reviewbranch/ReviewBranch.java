@@ -3,6 +3,7 @@ package reviewbranch;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +72,7 @@ public class ReviewBranch {
     addConfigIfNeeded("notes.rewriteRef", "refs/notes/reviewid");
     addConfigIfNeeded("notes.rewriteRef", "refs/notes/reviewlasthash");
   }
-  
+
   private void addConfigIfNeeded(String key, String value) {
     List<String> current = git.getMultipleValueConfig(key);
     if (!current.contains(value)) {
@@ -87,13 +88,9 @@ public class ReviewBranch {
 
     Optional<String> previousRbId = Optional.empty();
     for (String rev : revs) {
-      if (!previousRbId.isPresent()) {
-        log.info("Resetting to {}", rev);
-        git.resetHard(rev);
-      } else {
-        log.info("Cherry picking {}", rev);
-        git.cherryPick(rev);
-      }
+      // We don't amend commits, so a straight reset each time is fine
+      log.info("Resetting to {}", rev);
+      git.resetHard(rev);
 
       Optional<String> rbId = git.getNote("reviewid");
       Optional<String> lastTreeHash = git.getNote("reviewlasthash");
@@ -103,9 +100,18 @@ public class ReviewBranch {
         if (lastTreeHash.isPresent() && lastTreeHash.get().equals(currentTreeHash)) {
           log.info("Skipped RB: " + rbId.get());
         } else {
-          rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
-          log.info("Updated RB: " + rbId.get());
-          git.setNote("reviewlasthash", currentTreeHash);
+          if (rbId.get().contains("\n")) {
+            // this is a squased/fixed commit
+            rbId = rbId.map(id -> StringUtils.substringBefore(id, "\n"));
+            rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
+            log.info("Updated RB: " + rbId.get());
+            git.setNote("reviewid", rbId.get());
+            git.setNote("reviewlasthash", currentTreeHash);
+          } else {
+            rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
+            log.info("Updated RB: " + rbId.get());
+            git.setNote("reviewlasthash", currentTreeHash);
+          }
         }
         previousRbId = rbId;
       } else {
