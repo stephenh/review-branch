@@ -180,9 +180,9 @@ public class ReviewBranchTest {
     b.ensureGitNotesConfigured();
     verify(git, atLeast(2)).getMultipleValueConfig("notes.displayRef");
     verify(git, atLeast(2)).getMultipleValueConfig("notes.rewriteRef");
-    verify(git).addMultipleValueConfig("notes.displayRef", "ref/notes/reviewid");
-    verify(git).addMultipleValueConfig("notes.displayRef", "ref/notes/reviewlasthash");
-    verify(git).addMultipleValueConfig("notes.rewriteRef", "ref/notes/reviewid");
-    verify(git).addMultipleValueConfig("notes.rewriteRef", "ref/notes/reviewlasthash");
+    verify(git).addMultipleValueConfig("notes.displayRef", "refs/notes/reviewid");
+    verify(git).addMultipleValueConfig("notes.displayRef", "refs/notes/reviewlasthash");
+    verify(git).addMultipleValueConfig("notes.rewriteRef", "refs/notes/reviewid");
+    verify(git).addMultipleValueConfig("notes.rewriteRef", "refs/notes/reviewlasthash");
   }
 }

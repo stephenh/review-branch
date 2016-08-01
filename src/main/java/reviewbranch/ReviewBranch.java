@@ -66,10 +66,10 @@ public class ReviewBranch {
   }
 
   public void ensureGitNotesConfigured() {
-    addConfigIfNeeded("notes.displayRef", "ref/notes/reviewid");
-    addConfigIfNeeded("notes.displayRef", "ref/notes/reviewlasthash");
-    addConfigIfNeeded("notes.rewriteRef", "ref/notes/reviewid");
-    addConfigIfNeeded("notes.rewriteRef", "ref/notes/reviewlasthash");
+    addConfigIfNeeded("notes.displayRef", "refs/notes/reviewid");
+    addConfigIfNeeded("notes.displayRef", "refs/notes/reviewlasthash");
+    addConfigIfNeeded("notes.rewriteRef", "refs/notes/reviewid");
+    addConfigIfNeeded("notes.rewriteRef", "refs/notes/reviewlasthash");
   }
   
   private void addConfigIfNeeded(String key, String value) {
