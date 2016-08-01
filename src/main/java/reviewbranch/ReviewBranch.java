@@ -2,6 +2,7 @@ package reviewbranch;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -11,12 +12,15 @@ import com.github.rvesse.airline.Cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.builder.CliBuilder;
+import com.google.common.base.Charsets;
+import com.google.common.hash.Hashing;
 
 /**
  * Creates RBs for a branch, one RB per commit.
  */
 public class ReviewBranch {
 
+  private static final Pattern indexRegex = Pattern.compile("\nindex \\w+\\.\\.\\w+ \\d+\n");
   @Command(name = "review")
   public static class ReviewArgs {
     @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")
@@ -93,11 +97,11 @@ public class ReviewBranch {
       git.resetHard(rev);
 
       Optional<String> rbId = git.getNote("reviewid");
-      Optional<String> lastTreeHash = git.getNote("reviewlasthash");
-      String currentTreeHash = git.getCurrentTreeHash();
+      Optional<String> lastDiffHash = git.getNote("reviewlasthash");
+      String currentDiffHash = stripIndexAndHash(git.getCurrentDiff());
 
       if (rbId.isPresent()) {
-        if (lastTreeHash.isPresent() && lastTreeHash.get().equals(currentTreeHash)) {
+        if (lastDiffHash.isPresent() && lastDiffHash.get().equals(currentDiffHash)) {
           log.info("Skipped RB: " + rbId.get());
         } else {
           if (rbId.get().contains("\n")) {
@@ -106,11 +110,11 @@ public class ReviewBranch {
             rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
             log.info("Updated RB: " + rbId.get());
             git.setNote("reviewid", rbId.get());
-            git.setNote("reviewlasthash", currentTreeHash);
+            git.setNote("reviewlasthash", currentDiffHash);
           } else {
             rb.updateRbForCurrentCommit(args, rbId.get(), previousRbId);
             log.info("Updated RB: " + rbId.get());
-            git.setNote("reviewlasthash", currentTreeHash);
+            git.setNote("reviewlasthash", currentDiffHash);
           }
         }
         previousRbId = rbId;
@@ -118,7 +122,7 @@ public class ReviewBranch {
         String newRbId = rb.createNewRbForCurrentCommit(args, currentBranch, previousRbId);
         log.info("Created RB: " + newRbId);
         git.setNote("reviewid", newRbId);
-        git.setNote("reviewlasthash", currentTreeHash);
+        git.setNote("reviewlasthash", currentDiffHash);
         previousRbId = Optional.of(newRbId);
       }
     }
@@ -147,5 +151,11 @@ public class ReviewBranch {
       log.info("Updated RB: " + rbId.get());
       previousRbId = rbId;
     }
+  }
+
+  private static String stripIndexAndHash(String diff) {
+    // the index line includes hashes that will change after rebases
+    diff = indexRegex.matcher(diff).replaceAll("\n");
+    return Hashing.sha1().hashString(diff, Charsets.UTF_8).toString();
   }
 }

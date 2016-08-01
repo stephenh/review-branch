@@ -7,9 +7,9 @@ public interface Git {
 
   String getCurrentBranch();
 
-  String getCurrentTreeHash();
-
   String getCurrentCommitMessage();
+
+  String getCurrentDiff();
 
   void amendCurrentCommitMessage(String newMessage);
 

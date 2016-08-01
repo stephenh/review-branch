@@ -66,8 +66,8 @@ public class GitImpl implements Git {
   }
 
   @Override
-  public String getCurrentTreeHash() {
-    BufferedResult r = git().arg("log").arg("-1").arg("--pretty=%T").toBuffer();
+  public String getCurrentDiff() {
+    BufferedResult r = git().arg("diff").arg("HEAD^..HEAD").toBuffer();
     failIfInvalidResult(r);
     return chomp(r.out);
   }
