@@ -21,6 +21,7 @@ import com.google.common.hash.Hashing;
 public class ReviewBranch {
 
   private static final Pattern indexRegex = Pattern.compile("\nindex \\w+\\.\\.\\w+ \\d+\n");
+
   @Command(name = "review")
   public static class ReviewArgs {
     @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")
@@ -132,14 +133,29 @@ public class ReviewBranch {
     List<String> revs = git.getRevisionsFromOriginMaster();
     log.info("Found revs {}", revs);
 
-    Optional<String> previousRbId = Optional.empty();
+    boolean firstRev = true;
+
     for (String rev : revs) {
-      if (!previousRbId.isPresent()) {
+      if (firstRev) {
         log.info("Resetting to {}", rev);
         git.resetHard(rev);
+        firstRev = false;
       } else {
+        String lastAmendedCommit = git.getCurrentCommit();
+        // before we cherry pick, go get our reviewid
+        git.resetHard(rev);
+        Optional<String> rbId = git.getNote("reviewid");
+        Optional<String> reviewlasthash = git.getNote("reviewlasthash");
+        if (!rbId.isPresent()) {
+          throw new IllegalStateException("Cannot dcommit without a previous review");
+        }
+        // now we can go back and cherry pick
+        git.resetHard(lastAmendedCommit);
         log.info("Cherry picking {}", rev);
         git.cherryPick(rev);
+        // restore the metadata on the picked commit
+        git.setNote("reviewid", rbId.get());
+        git.setNote("reviewlasthash", reviewlasthash.get());
       }
 
       Optional<String> rbId = git.getNote("reviewid");
@@ -149,7 +165,6 @@ public class ReviewBranch {
 
       rb.dcommit(rbId.get());
       log.info("Updated RB: " + rbId.get());
-      previousRbId = rbId;
     }
   }
 

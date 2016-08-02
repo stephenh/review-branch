@@ -11,6 +11,8 @@ public interface Git {
 
   String getCurrentDiff();
 
+  String getCurrentCommit();
+
   void amendCurrentCommitMessage(String newMessage);
 
   List<String> getRevisionsFromOriginMaster();

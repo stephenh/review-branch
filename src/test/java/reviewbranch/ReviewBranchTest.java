@@ -198,13 +198,21 @@ public class ReviewBranchTest {
     // given we want to dcommit two new commits
     when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
     when(git.getNote("reviewid")).thenReturn(Optional.of("1"), Optional.of("2"));
+    when(git.getNote("reviewlasthash")).thenReturn(Optional.of("hash"));
+    when(git.getCurrentCommit()).thenReturn("commitA2");
     // when ran
     b.run(new DCommitArgs());
     // then we dcommit each commit
     verify(git).getRevisionsFromOriginMaster();
     verify(git).resetHard("commitA");
+    verify(git).getCurrentCommit();
+    verify(git).resetHard("commitB");
+    verify(git).resetHard("commitA2");
     verify(git).cherryPick("commitB");
-    verify(git, atLeast(2)).getNote("reviewid");
+    verify(git, atLeast(3)).getNote("reviewid");
+    verify(git).getNote("reviewlasthash");
+    verify(git).setNote("reviewid", "2");
+    verify(git).setNote("reviewlasthash", "hash");
     verify(rb).dcommit("1");
     verify(rb).dcommit("2");
   }

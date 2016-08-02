@@ -59,6 +59,13 @@ public class GitImpl implements Git {
   }
 
   @Override
+  public String getCurrentCommit() {
+    BufferedResult r = git().arg("rev-parse").arg("--short").arg("HEAD").toBuffer();
+    failIfInvalidResult(r);
+    return chomp(r.out);
+  }
+
+  @Override
   public String getCurrentCommitMessage() {
     BufferedResult r = git().arg("log").arg("-1").arg("--pretty=%B").toBuffer();
     failIfInvalidResult(r);
