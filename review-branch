@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAIN=reviewbranch.ReviewBranch
+JAR=review-branch-all.jar
+
+if [ -e ${SCRIPT_DIRECTORY}/${JAR} ]; then
+  java -cp ${SCRIPT_DIRECTORY}/${JAR} $MAIN $*
+elif [ -e ${SCRIPT_DIRECTORY}/build/libs/${JAR} ]; then
+  java -cp ${SCRIPT_DIRECTORY}/build/libs/${JAR} $MAIN $*
+fi
+

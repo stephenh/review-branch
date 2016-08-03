@@ -12,6 +12,7 @@ import com.github.rvesse.airline.Cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.builder.CliBuilder;
+import com.github.rvesse.airline.help.Help;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 
@@ -22,7 +23,7 @@ public class ReviewBranch {
 
   private static final Pattern indexRegex = Pattern.compile("\nindex \\w+\\.\\.\\w+ \\d+\n");
 
-  @Command(name = "review")
+  @Command(name = "review", description = "Creates/updates an RB for each new/updated commit in your branch")
   public static class ReviewArgs {
     @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")
     public String reviewers;
@@ -37,19 +38,17 @@ public class ReviewBranch {
     public String testingDone;
   }
 
-  @Command(name = "dcommit")
+  @Command(name = "dcommit", description = "Stamps each commit in your branch with its RB's approval information")
   public static class DCommitArgs {
   }
 
   public static void main(String[] stringArgs) {
-    // SingleCommand<ReviewArgs> parser = SingleCommand.singleCommand(ReviewArgs.class);
-    // ReviewArgs args = parser.parse(stringArgs);
-    // new ReviewBranch(new GitImpl(), new ReviewBoardImpl(), args).run();
-
     CliBuilder<Object> b = Cli.<Object> builder("review-branch").withDescription("creates lots of RBs");
     b.withCommand(ReviewArgs.class);
     b.withCommand(DCommitArgs.class);
-    Object args = b.build().parse(stringArgs);
+    b.withDefaultCommand(Help.class);
+    Cli<Object> cli = b.build();
+    Object args = cli.parse(stringArgs);
     new ReviewBranch(new GitImpl(), new ReviewBoardImpl()).run(args);
   }
 
@@ -63,11 +62,14 @@ public class ReviewBranch {
   }
 
   public void run(Object args) {
-    ensureGitNotesConfigured();
     if (args instanceof ReviewArgs) {
+      ensureGitNotesConfigured();
       run((ReviewArgs) args);
-    } else {
+    } else if (args instanceof DCommitArgs) {
+      ensureGitNotesConfigured();
       run((DCommitArgs) args);
+    } else if (args instanceof Runnable) {
+      ((Runnable) args).run();
     }
   }
 
