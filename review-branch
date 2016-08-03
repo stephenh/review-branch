@@ -8,5 +8,8 @@ if [ -e ${SCRIPT_DIRECTORY}/${JAR} ]; then
   java -cp ${SCRIPT_DIRECTORY}/${JAR} $MAIN $*
 elif [ -e ${SCRIPT_DIRECTORY}/build/libs/${JAR} ]; then
   java -cp ${SCRIPT_DIRECTORY}/build/libs/${JAR} $MAIN $*
+else
+  echo "${JAR} not found in ${SCRIPT_DIRECTORY}"
+  exit 1
 fi
 

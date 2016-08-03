@@ -1,4 +1,4 @@
-package reviewbranch;
+package reviewbranch.commands;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static org.mockito.Mockito.atLeast;
@@ -16,16 +16,15 @@ import org.junit.Test;
 import com.google.common.base.Joiner;
 import com.google.common.hash.Hashing;
 
-import reviewbranch.ReviewBranch.DCommitArgs;
-import reviewbranch.ReviewBranch.ReviewArgs;
+import reviewbranch.Git;
+import reviewbranch.ReviewBoard;
 
-@SuppressWarnings({ "unchecked" })
-public class ReviewBranchTest {
+  @SuppressWarnings("unchecked")
+public class ReviewCommandTest {
 
   private final Git git = mock(Git.class);
   private final ReviewBoard rb = mock(ReviewBoard.class);
-  private final ReviewArgs args = new ReviewArgs();
-  private final ReviewBranch b = new ReviewBranch(git, rb);
+  private final ReviewCommand args = new ReviewCommand();
 
   @After
   public void after() {
@@ -42,7 +41,7 @@ public class ReviewBranchTest {
     when(git.getCurrentDiff()).thenReturn(diffA);
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     // when ran
-    b.run(args);
+    run();
     // then we post a new RB for the current commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -64,7 +63,7 @@ public class ReviewBranchTest {
     when(git.getNote("reviewlasthash")).thenReturn(Optional.of(diffAWithoutIndexLine));
     when(git.getCurrentDiff()).thenReturn(diffB);
     // when ran
-    b.run(args);
+    run();
     // then we post an update to RB for the current commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -88,7 +87,7 @@ public class ReviewBranchTest {
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
     // when ran
-    b.run(args);
+    run();
     // then we post a new RB for the current commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -119,7 +118,7 @@ public class ReviewBranchTest {
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
     // when ran
-    b.run(args);
+    run();
     // then we post a new RB for the 2nd commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -146,7 +145,7 @@ public class ReviewBranchTest {
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
     // when ran
-    b.run(args);
+    run();
     // then we post a new RB for the 2nd commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -175,7 +174,7 @@ public class ReviewBranchTest {
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
     when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
     // when ran
-    b.run(args);
+    run();
     // then we post a new RB for the 2nd commit
     verify(git).getCurrentBranch();
     verify(git).getRevisionsFromOriginMaster();
@@ -193,43 +192,12 @@ public class ReviewBranchTest {
     verify(git).setNote("reviewlasthash", sha1(diffBWithoutIndexLine));
   }
 
-  @Test
-  public void dcommitTwoCommits() {
-    // given we want to dcommit two new commits
-    when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
-    when(git.getNote("reviewid")).thenReturn(Optional.of("1"), Optional.of("2"));
-    when(git.getNote("reviewlasthash")).thenReturn(Optional.of("hash"));
-    when(git.getCurrentCommit()).thenReturn("commitA2");
-    // when ran
-    b.run(new DCommitArgs());
-    // then we dcommit each commit
-    verify(git).getRevisionsFromOriginMaster();
-    verify(git).resetHard("commitA");
-    verify(git).getCurrentCommit();
-    verify(git).resetHard("commitB");
-    verify(git).resetHard("commitA2");
-    verify(git).cherryPick("commitB");
-    verify(git, atLeast(3)).getNote("reviewid");
-    verify(git).getNote("reviewlasthash");
-    verify(git).setNote("reviewid", "2");
-    verify(git).setNote("reviewlasthash", "hash");
-    verify(rb).dcommit("1");
-    verify(rb).dcommit("2");
-  }
-
-  @Test
-  public void setupGitNotes() {
-    b.ensureGitNotesConfigured();
-    verify(git, atLeast(2)).getMultipleValueConfig("notes.displayRef");
-    verify(git, atLeast(2)).getMultipleValueConfig("notes.rewriteRef");
-    verify(git).addMultipleValueConfig("notes.displayRef", "refs/notes/reviewid");
-    verify(git).addMultipleValueConfig("notes.displayRef", "refs/notes/reviewlasthash");
-    verify(git).addMultipleValueConfig("notes.rewriteRef", "refs/notes/reviewid");
-    verify(git).addMultipleValueConfig("notes.rewriteRef", "refs/notes/reviewlasthash");
-  }
-
   private static String sha1(String diff) {
     return Hashing.sha1().hashString(diff, UTF_8).toString();
+  }
+
+  private void run() {
+    args.run(git, rb);
   }
 
   private static final String diffA = Joiner.on("\n").join(
@@ -259,4 +227,5 @@ public class ReviewBranchTest {
 
   private static final String diffB = diffA.replace("A.java", "B.java");
   private static final String diffBWithoutIndexLine = diffAWithoutIndexLine.replace("A.java", "B.java");
+
 }

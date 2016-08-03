@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import joist.util.Execute;
 import joist.util.Execute.BufferedResult;
-import reviewbranch.ReviewBranch.ReviewArgs;
+import reviewbranch.commands.ReviewCommand;
 
 /**
  * Implements {@link ReviewBoard} but via calling the {@code git review} commands.
@@ -15,7 +15,7 @@ public class ReviewBoardImpl implements ReviewBoard {
 
   @Override
   public String createNewRbForCurrentCommit(//
-    ReviewArgs args,
+    ReviewCommand args,
     String currentBranch,
     Optional<String> previousRbId) {
     // `git review` stores a single RB-per-branch ID in config; ensure we don't use that
@@ -51,7 +51,7 @@ public class ReviewBoardImpl implements ReviewBoard {
   }
 
   @Override
-  public void updateRbForCurrentCommit(ReviewArgs args, String rbId, Optional<String> previousRbId) {
+  public void updateRbForCurrentCommit(ReviewCommand args, String rbId, Optional<String> previousRbId) {
     Execute e = git() //
       .arg("review")
       .arg("update")
