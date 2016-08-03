@@ -2,9 +2,9 @@ package reviewbranch.commands;
 
 import java.util.List;
 
-import reviewbranch.Git;
-import reviewbranch.ReviewBoard;
 import reviewbranch.ReviewBranch;
+import reviewbranch.apis.Git;
+import reviewbranch.apis.ReviewBoard;
 
 /**
  * An interface for {@link ReviewBranch} commands.

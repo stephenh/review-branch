@@ -13,8 +13,8 @@ import com.github.rvesse.airline.annotations.Option;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 
-import reviewbranch.Git;
-import reviewbranch.ReviewBoard;
+import reviewbranch.apis.Git;
+import reviewbranch.apis.ReviewBoard;
 
 @Command(name = "review", description = "Creates/updates an RB for each new/updated commit in your branch")
 public class ReviewCommand extends AbstractCommand {

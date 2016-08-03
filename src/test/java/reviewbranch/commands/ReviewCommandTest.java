@@ -16,8 +16,8 @@ import org.junit.Test;
 import com.google.common.base.Joiner;
 import com.google.common.hash.Hashing;
 
-import reviewbranch.Git;
-import reviewbranch.ReviewBoard;
+import reviewbranch.apis.Git;
+import reviewbranch.apis.ReviewBoard;
 
   @SuppressWarnings("unchecked")
 public class ReviewCommandTest {

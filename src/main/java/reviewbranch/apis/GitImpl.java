@@ -1,4 +1,4 @@
-package reviewbranch;
+package reviewbranch.apis;
 
 import static org.apache.commons.lang3.StringUtils.chomp;
 

@@ -12,8 +12,8 @@ import org.jooq.lambda.Seq;
 import org.junit.After;
 import org.junit.Test;
 
-import reviewbranch.Git;
-import reviewbranch.ReviewBoard;
+import reviewbranch.apis.Git;
+import reviewbranch.apis.ReviewBoard;
 
   @SuppressWarnings("unchecked")
 public class DCommitCommandTest {

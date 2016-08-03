@@ -4,6 +4,10 @@ import com.github.rvesse.airline.Cli;
 import com.github.rvesse.airline.builder.CliBuilder;
 import com.github.rvesse.airline.help.Help;
 
+import reviewbranch.apis.Git;
+import reviewbranch.apis.GitImpl;
+import reviewbranch.apis.ReviewBoard;
+import reviewbranch.apis.ReviewBoardImpl;
 import reviewbranch.commands.AbstractCommand;
 import reviewbranch.commands.DCommitCommand;
 import reviewbranch.commands.ReviewCommand;

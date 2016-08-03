@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import com.github.rvesse.airline.annotations.Command;
 
-import reviewbranch.Git;
-import reviewbranch.ReviewBoard;
+import reviewbranch.apis.Git;
+import reviewbranch.apis.ReviewBoard;
 
 @Command(name = "dcommit", description = "Stamps each commit in your branch with its RB's approval information")
 public class DCommitCommand extends AbstractCommand {
