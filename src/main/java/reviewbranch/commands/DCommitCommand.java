@@ -22,37 +22,41 @@ public class DCommitCommand extends AbstractCommand {
     log.info("Found revs {}", revs);
 
     boolean firstRev = true;
-
     for (String rev : revs) {
       if (firstRev) {
         log.info("Resetting to {}", rev);
         git.resetHard(rev);
         firstRev = false;
       } else {
+        // normally we would just cherry pick rev, but that
+        // looses the notes, so we need to resetHard to rev,
+        // copy it's notes, then jump back to where we were
         String lastAmendedCommit = git.getCurrentCommit();
-        // before we cherry pick, go get our reviewid
         git.resetHard(rev);
         Optional<String> rbId = git.getNote("reviewid");
         Optional<String> reviewlasthash = git.getNote("reviewlasthash");
-        if (!rbId.isPresent()) {
-          throw new IllegalStateException("Cannot dcommit without a previous review");
-        }
-        // now we can go back and cherry pick
         git.resetHard(lastAmendedCommit);
+
+        // now we can go back and cherry pick
         log.info("Cherry picking {}", rev);
         git.cherryPick(rev);
-        // restore the metadata on the picked commit
-        git.setNote("reviewid", rbId.get());
-        git.setNote("reviewlasthash", reviewlasthash.get());
+
+        // and restore the metadata on the picked commit (although
+        // if we didn't have any, e.g. this is a new un-RB'd commit,
+        // just skip it and keep going)
+        if (rbId.isPresent()) {
+          git.setNote("reviewid", rbId.get());
+          git.setNote("reviewlasthash", reviewlasthash.get());
+        }
       }
 
       Optional<String> rbId = git.getNote("reviewid");
-      if (!rbId.isPresent()) {
-        throw new IllegalStateException("Cannot dcommit without a previous review");
+      if (rbId.isPresent()) {
+        rb.dcommit(rbId.get());
+        log.info("Updated RB: " + rbId.get());
+      } else {
+        log.info("Skipped rev: {} (no RB found)", rev);
       }
-
-      rb.dcommit(rbId.get());
-      log.info("Updated RB: " + rbId.get());
     }
   }
 

@@ -19,7 +19,7 @@ import reviewbranch.apis.ReviewBoard;
 @Command(name = "review", description = "Creates/updates an RB for each new/updated commit in your branch")
 public class ReviewCommand extends AbstractCommand {
 
-  private static final Logger log = LoggerFactory.getLogger(DCommitCommand.class);
+  private static final Logger log = LoggerFactory.getLogger(ReviewCommand.class);
   private static final Pattern indexRegex = Pattern.compile("\nindex \\w+\\.\\.\\w+ \\d+\n");
 
   @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")

@@ -15,7 +15,7 @@ import org.junit.Test;
 import reviewbranch.apis.Git;
 import reviewbranch.apis.ReviewBoard;
 
-  @SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked")
 public class DCommitCommandTest {
 
   private final Git git = mock(Git.class);
