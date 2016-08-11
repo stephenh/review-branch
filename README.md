@@ -34,14 +34,14 @@ Install from source
 
 1. Clone this repo
 2. Run `gradle shadowJar`
-3. Copy `build/libs/review-branch-all.jar` and `review-branch` to your home directory (or other misc tools directory)
+3. Copy `build/libs/review-branch-all.jar` and `review-branch` to your home directory (or `~/bin` or other misc tools directory on your path)
 4. `chmod u+x ~/review-branch`
 5. Now run `~/review-branch review` or `~/review-branch dcommit` in your project's directory
 
 Install from pre-built jar
 ==========================
 
-1. Download [review-branch-all.jar](http://repo.joist.ws/review-branch-all.jar) and [review-branch](http://repo.joist.ws/review-branch) to your home directory (or other misc tools directory)
+1. Download [review-branch-all.jar](http://repo.joist.ws/review-branch-all.jar) and [review-branch](http://repo.joist.ws/review-branch) to your home directory (or `~/bin` or other misc tools directory)
 2. `chmod u+x review-branch`
 3. Now run `~/review-branch review` or `~/review-branch dcommit` in your project's directory
 
