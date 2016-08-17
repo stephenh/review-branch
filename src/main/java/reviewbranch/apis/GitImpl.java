@@ -74,7 +74,7 @@ public class GitImpl implements Git {
 
   @Override
   public String getCurrentDiff() {
-    BufferedResult r = git().arg("diff").arg("HEAD^..HEAD").toBuffer();
+    BufferedResult r = git().arg("diff").arg("-U0").arg("HEAD^..HEAD").toBuffer();
     failIfInvalidResult(r);
     return chomp(r.out);
   }
