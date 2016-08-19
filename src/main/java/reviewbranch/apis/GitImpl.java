@@ -35,6 +35,12 @@ public class GitImpl implements Git {
   }
 
   @Override
+  public void mergeFf(String revision) {
+    BufferedResult r = git().arg("merge").arg("--ff").arg(revision).toBuffer();
+    failIfInvalidResult(r);
+  }
+
+  @Override
   public void resetHard(String revision) {
     BufferedResult r = git().arg("reset").arg("--hard").arg(revision).toBuffer();
     failIfInvalidResult(r);

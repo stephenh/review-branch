@@ -19,6 +19,8 @@ public interface Git {
 
   void checkout(String revision);
 
+  void mergeFf(String revision);
+
   void resetHard(String revision);
 
   void cherryPick(String revision);

@@ -10,6 +10,7 @@ import reviewbranch.apis.ReviewBoard;
 import reviewbranch.apis.ReviewBoardImpl;
 import reviewbranch.commands.AbstractCommand;
 import reviewbranch.commands.DCommitCommand;
+import reviewbranch.commands.MergeApprovedCommand;
 import reviewbranch.commands.ReviewCommand;
 
 /**
@@ -21,6 +22,7 @@ public class ReviewBranch {
     CliBuilder<Object> b = Cli.<Object> builder("review-branch").withDescription("creates lots of RBs");
     b.withCommand(ReviewCommand.class);
     b.withCommand(DCommitCommand.class);
+    b.withCommand(MergeApprovedCommand.class);
     b.withDefaultCommand(Help.class);
 
     Object command = b.build().parse(stringArgs);
