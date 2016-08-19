@@ -17,17 +17,35 @@ It currently assumes an internal environment, because instead of running the `rb
 Usage
 =====
 
-On your local branch, create code reviews by running:
+On your local branch (or your local master works fine too), create 1 code review per commit by running:
 
     review-branch review [--reviewers bob,fred] [--groups my-reviewers] [--publish] [--testing-done "yep!"]
 
-After you've made updates to your commits, or added new commits, run `review-branch review` again, and it will update RBs only for changed commits.
+After you've made updates to your commits, or added new commits, on your local branch, run `review-branch review` again, and it will update RBs only for changed commits.
 
 After you get ship it's, stamp each of your commits:
 
     review-branch dcommit
 
-Then merge your branch to master (e.g. `git merge --ff local-branch`) and `git push`.
+Then merge your branch to master. If all of your commits are approved, you can use vanilla `git` commands, e.g.:
+
+    git checkout master
+    git pull
+    git merge --ff local-branch
+    git push
+
+Or if you only have a subset of commits on your local branch approved (because reviewers are still getting to some of your newer RBs), `review-branch` can merge only up through the approved commits, e.g.:
+
+    # on feature branch
+    review-branch dcommit
+    review-branch merge-approved
+    # your now on master with first N approved commmits merged for you
+    git push
+    # go back to branch
+    git checkout local_branch
+    # rebase on top of the master, which might have changed due
+    # new commits, e.g. the version bump
+    git rebase master
 
 Install from source
 ===================
@@ -44,4 +62,9 @@ Install from pre-built jar
 1. Download [review-branch-all.jar](http://repo.joist.ws/review-branch-all.jar) and [review-branch](http://repo.joist.ws/review-branch) to your home directory (or `~/bin` or other misc tools directory)
 2. `chmod u+x review-branch`
 3. Now run `~/review-branch review` or `~/review-branch dcommit` in your project's directory
+
+Support
+=======
+
+Internally you can ping the `#adrap` channel or email/DM me, `shaberma`.
 
