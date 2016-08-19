@@ -123,6 +123,12 @@ public class GitImpl implements Git {
     failIfInvalidResult(r);
   }
 
+  @Override
+  public boolean isWorkingCopyClean() {
+    BufferedResult r = git().arg("diff-index").arg("--quiet").arg("HEAD").toBuffer();
+    return r.exitValue == 0;
+  }
+
   private static void failIfInvalidResult(BufferedResult r) {
     if (r.exitValue != 0) {
       System.out.println(r.out);

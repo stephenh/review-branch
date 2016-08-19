@@ -25,6 +25,8 @@ public interface Git {
 
   void cherryPick(String revision);
 
+  boolean isWorkingCopyClean();
+
   List<String> getMultipleValueConfig(String key);
 
   void addMultipleValueConfig(String key, String value);

@@ -1,5 +1,8 @@
 package reviewbranch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.rvesse.airline.Cli;
 import com.github.rvesse.airline.builder.CliBuilder;
 import com.github.rvesse.airline.help.Help;
@@ -18,6 +21,8 @@ import reviewbranch.commands.ReviewCommand;
  */
 public class ReviewBranch {
 
+  private static final Logger log = LoggerFactory.getLogger(ReviewBranch.class);
+
   public static void main(String[] stringArgs) {
     CliBuilder<Object> b = Cli.<Object> builder("review-branch").withDescription("creates lots of RBs");
     b.withCommand(ReviewCommand.class);
@@ -29,8 +34,12 @@ public class ReviewBranch {
     if (command instanceof AbstractCommand) {
       Git git = new GitImpl();
       ReviewBoard rb = new ReviewBoardImpl();
-      ((AbstractCommand) command).ensureGitNotesConfigured(git);
-      ((AbstractCommand) command).run(git, rb);
+      if (!git.isWorkingCopyClean()) {
+        log.error("Your working copy is not clean; ensure all changes are committed or stashed.");
+      } else {
+        ((AbstractCommand) command).ensureGitNotesConfigured(git);
+        ((AbstractCommand) command).run(git, rb);
+      }
     } else {
       ((Runnable) command).run();
     }
