@@ -39,7 +39,7 @@ Or if you only have a subset of commits on your local branch approved (because r
     # on feature branch
     review-branch dcommit
     review-branch merge-approved
-    # your now on master with first N approved commmits merged for you
+    # you're now on master with first N approved commmits merged for you
     git push
     # go back to branch
     git checkout local_branch
