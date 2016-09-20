@@ -2,6 +2,7 @@ package reviewbranch.commands;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +22,7 @@ public class ReviewCommand extends AbstractCommand {
 
   private static final Logger log = LoggerFactory.getLogger(ReviewCommand.class);
   private static final Pattern indexRegex = Pattern.compile("\nindex \\w+\\.\\.\\w+ \\d+\n");
+  private static final Pattern rbRegex = Pattern.compile("RB=(\\d+)");
 
   @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")
   public String reviewers;
@@ -51,22 +53,29 @@ public class ReviewCommand extends AbstractCommand {
       Optional<String> lastDiffHash = git.getNote("reviewlasthash");
       String currentDiffHash = stripIndexAndHash(git.getCurrentDiff());
 
+      // See if this is a rebased commit with an existing reviewid
+      if (!rbId.isPresent()) {
+        String message = git.getCurrentCommitMessage();
+        if (message != null) {
+          Matcher m = rbRegex.matcher(message);
+          if (m.find()) {
+            rbId = Optional.of(m.group(1));
+          }
+        }
+      }
+
       if (rbId.isPresent()) {
         if (lastDiffHash.isPresent() && lastDiffHash.get().equals(currentDiffHash)) {
           log.info("Skipped RB: " + rbId.get());
         } else {
           if (rbId.get().contains("\n")) {
-            // this is a squased/fixed commit
+            // this is a squashed/fixed commit
             rbId = rbId.map(id -> StringUtils.substringBefore(id, "\n"));
-            rb.updateRbForCurrentCommit(this, rbId.get(), previousRbId);
-            log.info("Updated RB: " + rbId.get());
-            git.setNote("reviewid", rbId.get());
-            git.setNote("reviewlasthash", currentDiffHash);
-          } else {
-            rb.updateRbForCurrentCommit(this, rbId.get(), previousRbId);
-            log.info("Updated RB: " + rbId.get());
-            git.setNote("reviewlasthash", currentDiffHash);
           }
+          rb.updateRbForCurrentCommit(this, rbId.get(), previousRbId);
+          log.info("Updated RB: " + rbId.get());
+          git.setNote("reviewid", rbId.get());
+          git.setNote("reviewlasthash", currentDiffHash);
         }
         previousRbId = rbId;
       } else {

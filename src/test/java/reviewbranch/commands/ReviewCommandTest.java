@@ -19,7 +19,7 @@ import com.google.common.hash.Hashing;
 import reviewbranch.apis.Git;
 import reviewbranch.apis.ReviewBoard;
 
-  @SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked")
 public class ReviewCommandTest {
 
   private final Git git = mock(Git.class);
@@ -48,6 +48,7 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitA");
     verify(git).getNote("reviewid");
     verify(git).getNote("reviewlasthash");
+    verify(git).getCurrentCommitMessage();
     verify(git).getCurrentDiff();
     verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.empty());
     verify(git).setNote("reviewid", "1");
@@ -72,6 +73,7 @@ public class ReviewCommandTest {
     verify(git).getNote("reviewlasthash");
     verify(git).getCurrentDiff();
     verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
+    verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", sha1(diffBWithoutIndexLine));
   }
 
@@ -95,6 +97,7 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
+    verify(git, atLeast(2)).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
     verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.empty());
     verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
@@ -126,6 +129,7 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
+    verify(git).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
     verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
     // commitB
@@ -153,10 +157,12 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
+    verify(git).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
     verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
     verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
     // and update both commits' notes
+    verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", sha1(diffAWithoutIndexLine + "2"));
     verify(git).setNote("reviewid", "2");
     verify(git).setNote("reviewlasthash", sha1(diffBWithoutIndexLine));
@@ -182,6 +188,7 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
+    verify(git).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
     verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
     verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
@@ -190,6 +197,34 @@ public class ReviewCommandTest {
     verify(git).setNote("reviewlasthash", sha1(diffAWithoutIndexLine + "2"));
     verify(git).setNote("reviewid", "2");
     verify(git).setNote("reviewlasthash", sha1(diffBWithoutIndexLine));
+  }
+
+  @Test
+  public void recoverReviewBoardFromCommitMessage() {
+    // given we had a commit reverted
+    when(git.getCurrentBranch()).thenReturn("branch1");
+    // and have cherry picked it
+    when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA").toList());
+    // so we don't have it's reviewid note
+    when(git.getNote("reviewid")).thenReturn(Optional.empty());
+    when(git.getNote("reviewlasthash")).thenReturn(Optional.empty());
+    when(git.getCurrentDiff()).thenReturn(diffA);
+    // but we have the reviewid in the commit message
+    when(git.getCurrentCommitMessage()).thenReturn("commitA\nRB=1");
+    // when ran
+    run();
+    // then we post a update to the RB
+    verify(git).getCurrentBranch();
+    verify(git).getRevisionsFromOriginMaster();
+    verify(git).resetHard("commitA");
+    verify(git).getNote("reviewid");
+    verify(git).getNote("reviewlasthash");
+    verify(git).getCurrentDiff();
+    verify(git).getCurrentCommitMessage();
+    verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
+    // and update the commit notes
+    verify(git).setNote("reviewid", "1");
+    verify(git).setNote("reviewlasthash", sha1(diffAWithoutIndexLine));
   }
 
   private static String sha1(String diff) {
