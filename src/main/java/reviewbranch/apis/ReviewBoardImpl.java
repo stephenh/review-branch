@@ -15,9 +15,10 @@ public class ReviewBoardImpl implements ReviewBoard {
 
   @Override
   public String createNewRbForCurrentCommit(//
-    ReviewCommand args,
-    String currentBranch,
-    Optional<String> previousRbId) {
+      ReviewCommand args,
+      String currentBranch,
+      Optional<String> previousRbId,
+      Optional<String> bugId) {
     // `git review` stores a single RB-per-branch ID in config; ensure we don't use that
     unsetReviewIdInGitConfig(currentBranch);
 
@@ -39,8 +40,14 @@ public class ReviewBoardImpl implements ReviewBoard {
     if (args.publish) {
       e.arg("--publish");
     }
-    if (previousRbId.isPresent()) {
-      e.arg("--rbt-flags").arg(" --depends-on=" + previousRbId.get());
+    if (previousRbId.isPresent() || bugId.isPresent()) {
+      e.arg("--rbt-flags");
+      if (previousRbId.isPresent()) {
+        e.arg(" --depends-on=" + previousRbId.get());
+      }
+      if (bugId.isPresent()) {
+        e.arg(" --bugs-closed=" + bugId.get());
+      }
     }
 
     BufferedResult r = e.toBuffer();

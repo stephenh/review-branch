@@ -23,6 +23,7 @@ public class ReviewCommand extends AbstractCommand {
   private static final Logger log = LoggerFactory.getLogger(ReviewCommand.class);
   private static final Pattern indexRegex = Pattern.compile("\nindex \\w+\\.\\.\\w+ \\d+\n");
   private static final Pattern rbRegex = Pattern.compile("RB=(\\d+)");
+  private static final Pattern bugRegex = Pattern.compile("BUG=([\\w\\d-]+)");
 
   @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")
   public String reviewers;
@@ -52,10 +53,10 @@ public class ReviewCommand extends AbstractCommand {
       Optional<String> rbId = git.getNote("reviewid");
       Optional<String> lastDiffHash = git.getNote("reviewlasthash");
       String currentDiffHash = stripIndexAndHash(git.getCurrentDiff());
+      String message = git.getCurrentCommitMessage();
 
       // See if this is a rebased commit with an existing reviewid
       if (!rbId.isPresent()) {
-        String message = git.getCurrentCommitMessage();
         if (message != null) {
           Matcher m = rbRegex.matcher(message);
           if (m.find()) {
@@ -79,13 +80,24 @@ public class ReviewCommand extends AbstractCommand {
         }
         previousRbId = rbId;
       } else {
-        String newRbId = rb.createNewRbForCurrentCommit(this, currentBranch, previousRbId);
+        Optional<String> bugId = findBugIdInCommitMessage(message);
+        String newRbId = rb.createNewRbForCurrentCommit(this, currentBranch, previousRbId, bugId);
         log.info("Created RB: " + newRbId);
         git.setNote("reviewid", newRbId);
         git.setNote("reviewlasthash", currentDiffHash);
         previousRbId = Optional.of(newRbId);
       }
     }
+  }
+
+  private static Optional<String> findBugIdInCommitMessage(String message) {
+    if (message != null) {
+      Matcher m = bugRegex.matcher(message);
+      if (m.find()) {
+        return Optional.of(m.group(1));
+      }
+    }
+    return Optional.empty();
   }
 
   private static String stripIndexAndHash(String diff) {

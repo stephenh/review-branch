@@ -1,6 +1,8 @@
 package reviewbranch.commands;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -39,7 +41,7 @@ public class ReviewCommandTest {
     when(git.getNote("reviewid")).thenReturn(Optional.empty());
     when(git.getNote("reviewlasthash")).thenReturn(Optional.empty());
     when(git.getCurrentDiff()).thenReturn(diffA);
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", empty(), empty())).thenReturn("1");
     // when ran
     run();
     // then we post a new RB for the current commit
@@ -50,7 +52,7 @@ public class ReviewCommandTest {
     verify(git).getNote("reviewlasthash");
     verify(git).getCurrentCommitMessage();
     verify(git).getCurrentDiff();
-    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.empty());
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", empty(), empty());
     verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", Hashing.sha1().hashString(diffAWithoutIndexLine, UTF_8).toString());
   }
@@ -71,6 +73,7 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitA");
     verify(git).getNote("reviewid");
     verify(git).getNote("reviewlasthash");
+    verify(git).getCurrentCommitMessage();
     verify(git).getCurrentDiff();
     verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
     verify(git).setNote("reviewid", "1");
@@ -86,8 +89,8 @@ public class ReviewCommandTest {
     when(git.getNote("reviewid")).thenReturn(Optional.empty(), Optional.empty());
     when(git.getNote("reviewlasthash")).thenReturn(Optional.empty(), Optional.empty());
     when(git.getCurrentDiff()).thenReturn(diffA, diffB);
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", empty(), empty())).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", of("1"), empty())).thenReturn("2");
     // when ran
     run();
     // then we post a new RB for the current commit
@@ -99,8 +102,8 @@ public class ReviewCommandTest {
     verify(git, atLeast(2)).getNote("reviewlasthash");
     verify(git, atLeast(2)).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
-    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.empty());
-    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", empty(), empty());
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", of("1"), empty());
     // commitA
     verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", sha1(diffAWithoutIndexLine));
@@ -118,8 +121,8 @@ public class ReviewCommandTest {
     when(git.getNote("reviewid")).thenReturn(Optional.of("1"), Optional.empty());
     when(git.getNote("reviewlasthash")).thenReturn(Optional.of(sha1(diffAWithoutIndexLine)), Optional.empty());
     when(git.getCurrentDiff()).thenReturn(diffA, diffB);
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", empty(), empty())).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", of("1"), empty())).thenReturn("2");
     // when ran
     run();
     // then we post a new RB for the 2nd commit
@@ -129,9 +132,9 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
-    verify(git).getCurrentCommitMessage();
+    verify(git, atLeast(2)).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
-    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", of("1"), empty());
     // commitB
     verify(git).setNote("reviewid", "2");
     verify(git).setNote("reviewlasthash", sha1(diffBWithoutIndexLine));
@@ -143,11 +146,11 @@ public class ReviewCommandTest {
     when(git.getCurrentBranch()).thenReturn("branch1");
     when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
     // and the first one already has an id but has a new tree hash
-    when(git.getNote("reviewid")).thenReturn(Optional.of("1"), Optional.empty());
-    when(git.getNote("reviewlasthash")).thenReturn(Optional.of(diffA), Optional.empty());
+    when(git.getNote("reviewid")).thenReturn(Optional.of("1"), empty());
+    when(git.getNote("reviewlasthash")).thenReturn(Optional.of(diffA), empty());
     when(git.getCurrentDiff()).thenReturn(diffA + "2", diffB);
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", empty(), empty())).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", of("1"), empty())).thenReturn("2");
     // when ran
     run();
     // then we post a new RB for the 2nd commit
@@ -157,10 +160,10 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
-    verify(git).getCurrentCommitMessage();
+    verify(git, atLeast(2)).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
-    verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
-    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
+    verify(rb).updateRbForCurrentCommit(args, "1", empty());
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", of("1"), empty());
     // and update both commits' notes
     verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", sha1(diffAWithoutIndexLine + "2"));
@@ -174,11 +177,11 @@ public class ReviewCommandTest {
     when(git.getCurrentBranch()).thenReturn("branch1");
     when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA", "commitB").toList());
     // and the first one it's notes rebased together with another commit
-    when(git.getNote("reviewid")).thenReturn(Optional.of("1\n\n3"), Optional.empty());
+    when(git.getNote("reviewid")).thenReturn(Optional.of("1\n\n3"), empty());
     when(git.getNote("reviewlasthash")).thenReturn(Optional.of("tree1\n\ntree3"), Optional.empty());
     when(git.getCurrentDiff()).thenReturn(diffA + "2", diffB);
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.empty())).thenReturn("1");
-    when(rb.createNewRbForCurrentCommit(args, "branch1", Optional.of("1"))).thenReturn("2");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", empty(), empty())).thenReturn("1");
+    when(rb.createNewRbForCurrentCommit(args, "branch1", of("1"), empty())).thenReturn("2");
     // when ran
     run();
     // then we post a new RB for the 2nd commit
@@ -188,10 +191,10 @@ public class ReviewCommandTest {
     verify(git).resetHard("commitB");
     verify(git, atLeast(2)).getNote("reviewid");
     verify(git, atLeast(2)).getNote("reviewlasthash");
-    verify(git).getCurrentCommitMessage();
+    verify(git, atLeast(2)).getCurrentCommitMessage();
     verify(git, atLeast(2)).getCurrentDiff();
-    verify(rb).updateRbForCurrentCommit(args, "1", Optional.empty());
-    verify(rb).createNewRbForCurrentCommit(args, "branch1", Optional.of("1"));
+    verify(rb).updateRbForCurrentCommit(args, "1", empty());
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", of("1"), empty());
     // and update both commits' notes
     verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", sha1(diffAWithoutIndexLine + "2"));
@@ -225,6 +228,31 @@ public class ReviewCommandTest {
     // and update the commit notes
     verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", sha1(diffAWithoutIndexLine));
+  }
+
+  @Test
+  public void setBugIdBasedOnCommitMessage() {
+    // given we want to review one new commit
+    when(git.getCurrentBranch()).thenReturn("branch1");
+    when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA").toList());
+    when(git.getNote("reviewid")).thenReturn(Optional.empty());
+    when(git.getNote("reviewlasthash")).thenReturn(Optional.empty());
+    when(git.getCurrentCommitMessage()).thenReturn("BUG=FOO-123");
+    when(git.getCurrentDiff()).thenReturn(diffA);
+    when(rb.createNewRbForCurrentCommit(args, "branch1", empty(), of("FOO-123"))).thenReturn("1");
+    // when ran
+    run();
+    // then we post a new RB for the current commit
+    verify(git).getCurrentBranch();
+    verify(git).getRevisionsFromOriginMaster();
+    verify(git).resetHard("commitA");
+    verify(git).getNote("reviewid");
+    verify(git).getNote("reviewlasthash");
+    verify(git).getCurrentCommitMessage();
+    verify(git).getCurrentDiff();
+    verify(rb).createNewRbForCurrentCommit(args, "branch1", empty(), of("FOO-123"));
+    verify(git).setNote("reviewid", "1");
+    verify(git).setNote("reviewlasthash", Hashing.sha1().hashString(diffAWithoutIndexLine, UTF_8).toString());
   }
 
   private static String sha1(String diff) {
