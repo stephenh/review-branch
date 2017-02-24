@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
 import java.util.Optional;
 
@@ -55,6 +56,31 @@ public class ReviewCommandTest {
     verify(rb).createNewRbForCurrentCommit(args, "branch1", empty(), empty());
     verify(git).setNote("reviewid", "1");
     verify(git).setNote("reviewlasthash", Hashing.sha1().hashString(diffAWithoutIndexLine, UTF_8).toString());
+  }
+
+  @Test
+  public void shouldNotCreateRbForWipCommits() {
+    // given we have a commit with "wip:" prefix on its commit message, we don't want to make an RB.
+    when(git.getCurrentBranch()).thenReturn("branch1");
+    when(git.getCurrentCommitMessage()).thenReturn("wip: refactoring city");
+    when(git.getRevisionsFromOriginMaster()).thenReturn(Seq.of("commitA").toList());
+    when(git.getNote("reviewid")).thenReturn(Optional.empty());
+    when(git.getNote("reviewlasthash")).thenReturn(Optional.empty());
+    when(git.getCurrentDiff()).thenReturn(diffA);
+    when(rb.createNewRbForCurrentCommit(args, "branch1", empty(), empty())).thenReturn("1");
+    // when ran
+    run();
+    // then we should not have a new RB
+    verify(git).getCurrentBranch();
+    verify(git).getRevisionsFromOriginMaster();
+    verify(git).resetHard("commitA");
+    verify(git).getNote("reviewid");
+    verify(git).getNote("reviewlasthash");
+    verify(git).getCurrentCommitMessage();
+    verify(git).getCurrentDiff();
+    verify(rb, times(0)).createNewRbForCurrentCommit(args, "branch1", empty(), empty());
+    verify(git, times(0)).setNote("reviewid", "1");
+    verify(git, times(0)).setNote("reviewlasthash", Hashing.sha1().hashString(diffAWithoutIndexLine, UTF_8).toString());
   }
 
   @Test
