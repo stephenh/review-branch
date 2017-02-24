@@ -1,0 +1,4 @@
+#!/bin/bash
+
+./gradlew shadowJar && scp build/libs/review-branch-all.jar ld1:~/ && scp build/libs/review-branch-all.jar joist.ws:/var/www/joist.repo/
+
