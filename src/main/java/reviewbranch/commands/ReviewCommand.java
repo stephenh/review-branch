@@ -54,6 +54,10 @@ public class ReviewCommand extends AbstractCommand {
       Optional<String> lastDiffHash = git.getNote("reviewlasthash");
       String currentDiffHash = stripIndexAndHash(git.getCurrentDiff());
       String message = git.getCurrentCommitMessage();
+      if (message != null && message.startsWith("wip:")) {
+        log.info("Skipping commit with prefix wip:");
+        continue;
+      }
 
       // See if this is a rebased commit with an existing reviewid
       if (!rbId.isPresent()) {
