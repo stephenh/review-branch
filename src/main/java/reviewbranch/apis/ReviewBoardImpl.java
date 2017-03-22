@@ -41,13 +41,14 @@ public class ReviewBoardImpl implements ReviewBoard {
       e.arg("--publish");
     }
     if (previousRbId.isPresent() || bugId.isPresent()) {
-      e.arg("--rbt-flags");
-      if (previousRbId.isPresent()) {
-        e.arg(" --depends-on=" + previousRbId.get());
-      }
+      String rbtFlags = "";
       if (bugId.isPresent()) {
-        e.arg(" --bugs-closed=" + bugId.get());
+        rbtFlags += " --bugs-closed " + bugId.get();
       }
+      if (previousRbId.isPresent()) {
+        rbtFlags += " --depends-on=" + previousRbId.get();
+      }
+      e.arg("--rbt-flags").arg(rbtFlags);
     }
 
     BufferedResult r = e.toBuffer();
