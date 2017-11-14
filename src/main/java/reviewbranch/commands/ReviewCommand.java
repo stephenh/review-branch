@@ -16,13 +16,13 @@ import com.google.common.hash.Hashing;
 
 import reviewbranch.apis.Git;
 import reviewbranch.apis.ReviewBoard;
+import reviewbranch.apis.ReviewId;
 
 @Command(name = "review", description = "Creates/updates an RB for each new/updated commit in your branch")
 public class ReviewCommand extends AbstractCommand {
 
   private static final Logger log = LoggerFactory.getLogger(ReviewCommand.class);
   private static final Pattern indexRegex = Pattern.compile("\nindex \\w+\\.\\.\\w+ \\d+\n");
-  private static final Pattern rbRegex = Pattern.compile("RB=(\\d+)");
   private static final Pattern bugRegex = Pattern.compile("BUG=([\\w\\d-]+)");
 
   @Option(name = { "-r", "--reviewers" }, description = "csv of reviewers (only set on RB creation)")
@@ -50,23 +50,13 @@ public class ReviewCommand extends AbstractCommand {
       log.info("Resetting to {}", rev);
       git.resetHard(rev);
 
-      Optional<String> rbId = git.getNote("reviewid");
+      String message = git.getCurrentCommitMessage();
+      Optional<String> rbId = ReviewId.getFromNoteOrCommitMessage(git, message);
       Optional<String> lastDiffHash = git.getNote("reviewlasthash");
       String currentDiffHash = stripIndexAndHash(git.getCurrentDiff());
-      String message = git.getCurrentCommitMessage();
       if (message != null && message.startsWith("wip:")) {
         log.info("Skipping commit with prefix wip:");
         continue;
-      }
-
-      // See if this is a rebased commit with an existing reviewid
-      if (!rbId.isPresent()) {
-        if (message != null) {
-          Matcher m = rbRegex.matcher(message);
-          if (m.find()) {
-            rbId = Optional.of(m.group(1));
-          }
-        }
       }
 
       if (rbId.isPresent()) {

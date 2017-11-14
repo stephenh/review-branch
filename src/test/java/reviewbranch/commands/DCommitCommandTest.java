@@ -40,6 +40,7 @@ public class DCommitCommandTest {
     verify(git).getRevisionsFromOriginMaster();
     verify(git).resetHard("commitA");
     verify(git).getCurrentCommit();
+    verify(git).getCurrentCommitMessage();
     verify(git).resetHard("commitB");
     verify(git).resetHard("commitA2");
     verify(git).cherryPick("commitB");

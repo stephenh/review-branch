@@ -10,6 +10,7 @@ import com.github.rvesse.airline.annotations.Command;
 
 import reviewbranch.apis.Git;
 import reviewbranch.apis.ReviewBoard;
+import reviewbranch.apis.ReviewId;
 
 @Command(name = "dcommit", description = "Stamps each commit in your branch with its RB's approval information")
 public class DCommitCommand extends AbstractCommand {
@@ -33,7 +34,8 @@ public class DCommitCommand extends AbstractCommand {
         // copy it's notes, then jump back to where we were
         String lastAmendedCommit = git.getCurrentCommit();
         git.resetHard(rev);
-        Optional<String> rbId = git.getNote("reviewid");
+        String message = git.getCurrentCommitMessage();
+        Optional<String> rbId = ReviewId.getFromNoteOrCommitMessage(git, message);
         Optional<String> reviewlasthash = git.getNote("reviewlasthash");
         git.resetHard(lastAmendedCommit);
 
