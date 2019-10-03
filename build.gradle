@@ -15,11 +15,11 @@ buildscript {
 repositories {
   mavenCentral()
   mavenLocal()
-  maven { url "http://repo.joist.ws" }
+  maven { url "https://jitpack.io" }
 }
 
 dependencies {
-  compile 'joist:joist-util:1.13.1'
+  compile 'com.github.stephenh:joist:1.14.0'
   compile 'org.jooq:jool:0.9.11'
   compile 'ch.qos.logback:logback-classic:1.1.7'
   compile 'org.apache.commons:commons-lang3:3.4'
