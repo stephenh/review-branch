@@ -28,15 +28,9 @@ public class ReviewBoardImpl implements ReviewBoard {
       .arg("--no-prompt")
       .arg("--parent")
       .arg("HEAD^");
-    if (args.groups != null) {
-      e.arg("--groups").arg(args.groups);
-    }
-    if (args.reviewers != null) {
-      e.arg("--reviewers").arg(args.reviewers);
-    }
-    if (args.testingDone != null) {
-      e.arg("--testing-done").arg(args.testingDone);
-    }
+    Optional.ofNullable(args.groups).ifPresent(gs -> e.arg("--groups").arg(gs));
+    Optional.ofNullable(args.reviewers).ifPresent(rs -> e.arg("--reviewers").arg(rs));
+    Optional.ofNullable(args.testingDone).ifPresent(td -> e.arg("--testing-done").arg(td));
     if (args.publish) {
       e.arg("--publish");
     }
@@ -67,15 +61,12 @@ public class ReviewBoardImpl implements ReviewBoard {
       .arg(rbId)
       .arg("--parent")
       .arg("HEAD^");
-    if (args.testingDone != null) {
-      e.arg("--testing-done").arg(args.testingDone);
-    }
+    Optional.ofNullable(args.testingDone).ifPresent(td -> e.arg("--testing-done").arg(td));
+    Optional.ofNullable(args.diffDescription).ifPresent(dd -> e.arg("--diff-description").arg(dd));
     if (args.publish) {
       e.arg("--publish");
     }
-    if (previousRbId.isPresent()) {
-      e.arg("--rbt-flags").arg(" --depends-on=" + previousRbId.get());
-    }
+    previousRbId.ifPresent(s -> e.arg("--rbt-flags").arg(" --depends-on=" + s));
 
     BufferedResult r = e.toBuffer();
     failIfInvalidResult(r);

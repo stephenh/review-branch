@@ -19,7 +19,7 @@ Usage
 
 On your local branch (or your local master works fine too), create 1 code review per commit by running:
 
-    review-branch review [--reviewers bob,fred] [--groups my-reviewers] [--publish] [--testing-done "yep!"]
+    review-branch review [--reviewers bob,fred] [--groups my-reviewers] [--publish] [--testing-done "yep!"] [--diff-description "Here's what I changed."]
 
 After you've made updates to your commits, or added new commits, on your local branch, run `review-branch review` again, and it will update RBs only for changed commits.
 

@@ -1,19 +1,16 @@
 package reviewbranch.commands;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
-
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reviewbranch.apis.Git;
 import reviewbranch.apis.ReviewBoard;
 import reviewbranch.apis.ReviewId;
@@ -36,6 +33,9 @@ public class ReviewCommand extends AbstractCommand {
 
   @Option(name = { "--testing-done" }, description = "text to add in testing done")
   public String testingDone;
+
+  @Option(name = { "-m", "--diff-description" }, description = "A description of what changed in this update of the review request.")
+  public String diffDescription;
 
   @Override
   public void run(Git git, ReviewBoard rb) {
@@ -85,13 +85,10 @@ public class ReviewCommand extends AbstractCommand {
   }
 
   private static Optional<String> findBugIdInCommitMessage(String message) {
-    if (message != null) {
-      Matcher m = bugRegex.matcher(message);
-      if (m.find()) {
-        return Optional.of(m.group(1));
-      }
-    }
-    return Optional.empty();
+    return Optional.ofNullable(message)
+        .map(bugRegex::matcher)
+        .filter(Matcher::find)
+        .map(m -> m.group(1));
   }
 
   private static String stripIndexAndHash(String diff) {

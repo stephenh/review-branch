@@ -23,6 +23,9 @@ public class ReviewBranch {
 
   private static final Logger log = LoggerFactory.getLogger(ReviewBranch.class);
 
+  private static final Git git = new GitImpl();
+  private static final ReviewBoard rb = new ReviewBoardImpl();
+
   public static void main(String[] stringArgs) {
     CliBuilder<Object> b = Cli.<Object> builder("review-branch").withDescription("creates lots of RBs");
     b.withCommand(ReviewCommand.class);
@@ -32,8 +35,6 @@ public class ReviewBranch {
 
     Object command = b.build().parse(stringArgs);
     if (command instanceof AbstractCommand) {
-      Git git = new GitImpl();
-      ReviewBoard rb = new ReviewBoardImpl();
       if (!git.isWorkingCopyClean()) {
         log.error("Your working copy is not clean; ensure all changes are committed or stashed.");
       } else {
